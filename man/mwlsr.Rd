@@ -63,7 +63,7 @@ glm against multiple responses simultaneously.
 \examples{
 # Using the iris data.
 design <- model.matrix(~Species, data=iris)
-fit <- mwlsr(t(iris[, 1:4]), design)
+fit <- mwlsr(iris[, 1:4], design)
 # test data association with the Species factor
 result <- mwlsr.Ftest(fit)
 print(table(result$F.padj < 0.05))

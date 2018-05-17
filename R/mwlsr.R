@@ -47,7 +47,7 @@
 #' @examples
 #' # Using the iris data.
 #' design <- model.matrix(~Species, data=iris)
-#' fit <- mwlsr(t(iris[, 1:4]), design)
+#' fit <- mwlsr(iris[, 1:4], design)
 #' # test data association with the Species factor
 #' result <- mwlsr.Ftest(fit)
 #' print(table(result$F.padj < 0.05))
@@ -320,7 +320,7 @@ mwlsr.Fstatistic <- function(fit) {
 mwlsr.Ftest <- function(fit) {
 
 	if(is.null(fit$F)) {
-		fit <- mwlsr_f(fit)
+		fit <- mwlsr.Fstatistic(fit)
 	}
 
 	vid <- colnames(fit$coefficients)
