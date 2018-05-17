@@ -42,7 +42,6 @@
 #' coefficients. This only makes sense if your design was based on a single
 #' multi-level factor}
 #' 
-#' @import parallel doParallel foreach doRNG 
 #' @export
 #' @examples
 #' # Using the iris data.
@@ -118,51 +117,20 @@ mwlsr <- function(data, design, weights=NULL, scale.weights=TRUE, data.err=NULL,
 	}
 
 	if(use.weights) {
-		# calculate weighted coefficients. this must run once per 
-		# model or, if I was interested in streamlining it, finding groups 
-		# of models that may share weights and calculating them in 
-		# groups. 
-		coefficients <- matrix(0, ncol=num.fits, nrow=ncol(design))
-		wcoefficients <- coefficients
-#		for(i in 1:num.fits) {
-#			y <- data[, i]
-#			w <- weights[, i]
-#			# call wls.coefs
-#			b <- drop(wls.coefs(design, y, weights=w, method=coef.method, tol=coef.tol))
-#			coefficients[, i] <- b
-#		}
+		# calculate weighted coefficients. 
 		
-		if(!require(parallel)) stop("Missing package 'parallel'")
-		if(!require(doParallel)) stop("Missing package 'doParallel'")
-		if(!require(foreach)) stop("Missing package 'foreach'")
-		if(!require(doRNG)) stop("Missing package 'doRNG'")
-		
-		ncores <- detectCores() / 2 - 1
-		cat("creating", ncores, "core cluster for fitting models\n")
-		cl <- makeCluster(ncores)
-		doParallel::registerDoParallel(cl)
-
-		rres <- tryCatch({
-			foreach(i=1:num.fits, .export=c("wls.coefs")) %dorng% { 
-				y <- data[, i]
-				w <- weights[, i]
-				# call wls.coefs
-				b <- drop(wls.coefs(design, y, weights=w, method=coef.method, tol=coef.tol))
-				b
-			}
-		}, error=function(e) {
-			# stop cluster
-			# parallel::stopCluster(cl)
-			print(paste("MY_ERROR: ", e))
-			NULL
-		}, finally = {
-			stopCluster(cl)
-		})
-		
-		if(is.null(rres)) stop("Something went wrong calculating coefficients in parallel.")
+		rres <- lapply(1:num.fits, function(i) {
+					y <- data[, i]
+					w <- weights[, i]
+					# call wls.coefs
+					b <- drop(wls.coefs(design, y, weights=w, method=coef.method, tol=coef.tol))
+					return(b)
+				})
 		
 		coefficients <- do.call(cbind, rres)
-
+		colnames(coefficients) <- colnames(data)
+		rownames(coefficients) <- colnames(design)
+		
 	} else {
 		# no weights so we can calc the coefficients in one shot
 		coefficients <- mols.coefs(design, data, method=coef.method, tol=coef.tol)
