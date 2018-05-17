@@ -410,6 +410,7 @@ mwlsr.coefStats <- function(fit) {
 #' 
 #' @param fit mwlsr fit object
 #' @return mwlsr fit object with group-level statistics appended
+#' @importFrom MASS ginv
 #' @export
 mwlsr.groupStats <- function(fit) {
 	
@@ -800,7 +801,7 @@ mwlsr_tukeyHSD <- mwlsr.tukeyHSD
 #' and \code{svd} is said to be the most reliable but maybe the slowest.
 #' @param tol Tolerance setting for the \code{svd} method.
 #' @return Matrix of fit coefficients.
-#' 
+#' @importFrom MASS ginv
 #' @export
 mols.coefs <- function(x, y, method=c("chol", "ginv", "svd", "qr"), tol=1e-7) {
 
@@ -866,7 +867,7 @@ mols.coefs <- function(x, y, method=c("chol", "ginv", "svd", "qr"), tol=1e-7) {
 #' @param method Coefficient calculation method. See \link{mols.coefs}.
 #' @param tol Tolerance for \code{svd} coefficient method.
 #' @return Vector of fit coefficients
-#' 
+#' @importFrom MASS ginv
 #' @export
 wls.coefs <- function(x, y, weights=NULL, method=c("chol", "ginv", "svd", "qr"), tol=1e-7) {
 	
