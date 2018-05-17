@@ -384,18 +384,18 @@ mwlsr.coefStats <- function(fit) {
 		})
 		fit$sccm <- sccm
 		fit$coef.stderr <- sqrt(sccm %*% diag(fit$dispersion))
-		fit$tvals <- fit$coefficients/fit$coef.stderr
-		fit$pvals <- pt(abs(fit$tvals), fit$df.residual, lower.tail=FALSE)*2
+		fit$coef.tvals <- fit$coefficients/fit$coef.stderr
+		fit$coef.pvals <- pt(abs(fit$coef.tvals), fit$df.residual, lower.tail=FALSE)*2
 
 	} else {
 		sccm <- diag(chol2inv(chol(crossprod(fit$X))))
 		fit$sccm <- sccm
 		fit$coef.stderr <- sqrt(sccm %*% matrix(fit$dispersion, 1))
-		fit$tvals <- fit$coefficients / fit$coef.stderr
-		fit$pvals <- pt(abs(fit$tvals), fit$df.residual, lower.tail=FALSE)*2
+		fit$coef.tvals <- fit$coefficients / fit$coef.stderr
+		fit$coef.pvals <- pt(abs(fit$coef.tvals), fit$df.residual, lower.tail=FALSE)*2
 	}
 
-	dimnames(fit$coef.stderr) <- dimnames(fit$tvals) <- dimnames(fit$pvals) <- dimnames(fit$coefficients)
+	dimnames(fit$coef.stderr) <- dimnames(fit$coef.tvals) <- dimnames(fit$coef.pvals) <- dimnames(fit$coefficients)
 	
 	return(fit)
 
@@ -459,6 +459,7 @@ mwlsr.contrastModelMatrix <- function(design, contrast) {
 	##
 	# NOTE: the bulk, if not all, of this code is from edgeR::glmLRT
 	
+	contrast0 <- contrast
 	contrast <- as.matrix(contrast)
 	if(nrow(contrast) != ncol(design)) stop("contrast does not match design matrix dimension")
 	
@@ -485,6 +486,10 @@ mwlsr.contrastModelMatrix <- function(design, contrast) {
 	design <- design %*% Q
 	
 	design0 <- design[, -coef]
+	
+	colnames(design0) <- paste("coef", 1:ncol(design0), sep="")
+	attr(design0, "contrast") <- contrast0
+	attr(design0, "coef.name") <- coef.name
 	
 	return(design0)
 	
@@ -538,7 +543,7 @@ mwlsr.contrastTest <- function(fit, contrast=NULL, coef=NULL, ncomps=NULL,
 		if(coef > ncol(fit$X)) {
 			stop("Coefficient is beyond the design dimension")
 		}
-		if(is.null(fit$coef.stderr)) {
+		if(is.null(fit$coef.stderr) || is.null(fit$coef.tvals) || is.null(fit$coef.pvals)) {
 			message("Calculating coefficient statistics...")
 			fit <- mwlsr.coefStats(fit)
 		}
@@ -546,9 +551,9 @@ mwlsr.contrastTest <- function(fit, contrast=NULL, coef=NULL, ncomps=NULL,
 		mref <- fit$coefficients[1, ]
 		mtarget <- mref+fit$coefficients[coef, ]
 		tnum <- fit$coefficients[coef, ]
-		tstat <- fit$tvals[coef, ]
+		tstat <- fit$coef.tvals[coef, ]
 		tdenom <- fit$coef.stderr[coef, ]
-		pval <- anova.p.adj(fit$pvals[coef, ], n.comps=ncomps, method="sidak")
+		pval <- mwlsr.p.adjust(fit$coef.pvals[coef, ], n.comps=ncomps, method="sidak")
 		baseMean <- (mref+mtarget)/2
 
 	} else if(!missing(contrast)) {
@@ -788,7 +793,6 @@ mwlsr.tukeyHSD <- function(fit) {
 
 	return(lout)
 }
-mwlsr_tukeyHSD <- mwlsr.tukeyHSD
 
 #' mols.coefs
 #' 
@@ -1041,7 +1045,6 @@ mwlsr.LRT <- function(full.m, reduced.m, test=c("F", "LRT")) {
 	
 	return(dout)
 }
-mwlsr_lrt <- mwlsr.LRT
 
 
 #' mwlsr.contrastCoefficients
@@ -1079,7 +1082,6 @@ mwlsr.contrastCoefficients <- function(fit, contrast) {
 	return(fit)
 
 }
-mwlsr_contrasts_coefs <- mwlsr.contrastCoefficients
 
 #' mwlsr.makeContrast
 #' 
@@ -1115,10 +1117,10 @@ mwlsr.makeContrast <- function(y, lvls, x=NULL) {
 		lvls <- levels(factor(lvls))
 	}
 		
-	nvalid <- lvls != make.names(lvls)
-	if(any(nvalid)) {
-		stop("The levels must be valid names (use make.names)")
-	}
+#	nvalid <- lvls != make.names(lvls)
+#	if(any(nvalid)) {
+#		stop("The levels must be valid names (use make.names)")
+#	}
 	
 	tmp <- c(y, x)
 	if(!all(tmp %in% lvls)) 
