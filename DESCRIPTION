@@ -1,0 +1,14 @@
+Package: mwlsr
+Title: Multiple Weighted Least Squares Regression
+Version: 1.0
+Authors@R: person("Shawn", "Driscoll", email = "sdriscoll@salk.edu", role = c("aut", "cre"))
+Description: This package defines mwlsr, a single function to perform gaussian
+	multiple least squares regression, weighted or not, simultaneously. 
+	Model coefficients and all results are kept together in matricies. This 
+	is similar in behavior to functions such as limma::lmFit.
+Imports: doParallel, doRNG, foreach, parallel, limma
+Depends: R (>= 3.4.4)
+License: Mine?
+Encoding: UTF-8
+LazyData: true
+RoxygenNote: 6.0.1
