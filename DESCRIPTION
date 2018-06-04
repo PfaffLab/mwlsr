@@ -7,7 +7,7 @@ Description: This package defines mwlsr, a single function to perform gaussian
 	Model coefficients and all results are kept together in matricies. This 
 	is similar in behavior to functions such as limma::lmFit.
 Imports: doParallel, doRNG, foreach, parallel, limma
-Depends: R (>= 3.4.4)
+Depends: R (>= 3.4.0)
 License: Mine?
 Encoding: UTF-8
 LazyData: true
